@@ -56,7 +56,6 @@ public final class Constants {
   }
 
   public static class ArmConstants{
-  public static class ArmConstants {
     public static final int MOTOR_ID_LEFT = 25;
     public static final int MOTOR_ID_RIGHT = 21;
     public static final double MAX_ANGLE = 95;
@@ -114,5 +113,4 @@ public final class Constants {
     }
   }
 
-}
 }

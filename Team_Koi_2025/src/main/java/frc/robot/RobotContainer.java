@@ -20,6 +20,8 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import edu.wpi.first.wpilibj2.command.Subsystem;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
@@ -27,12 +29,10 @@ import frc.robot.commands.ArmCommand;
 import frc.robot.commands.CommandCycler;
 import frc.robot.commands.ElevatorCommand;
 import frc.robot.commands.ElevatorSetPositionCommand;
-import frc.robot.commands.HandControllerCommand;
 import frc.robot.commands.HandRotaionCommand;
 import frc.robot.subsystems.ArmSubsystem;
 import frc.robot.subsystems.ElevatorSubsystem;
 import frc.robot.subsystems.HandRotaionSubSystem;
-import frc.robot.subsystems.RobotHandSubsystem;
 import frc.robot.subsystems.SwerveSubsystem;
 import java.io.File;
 import swervelib.SwerveInputStream;
@@ -51,8 +51,6 @@ public class RobotContainer {
   final CommandXboxController driverXbox = new CommandXboxController(1);
   final CommandXboxController handXbox = new CommandXboxController(2);
   // The robot's subsystems and commands are defined here...
-  private final RobotHandSubsystem ControlHand = new RobotHandSubsystem();
-  private final ArmSubsystem armSubsystem = new ArmSubsystem();
   //private final HandRotaionSubSystem RotateHandSub = new HandRotaionSubSystem();
   private final ElevatorSubsystem elevatorSubsystem = new ElevatorSubsystem();
   private final SwerveSubsystem drivebase = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(),
@@ -145,9 +143,6 @@ public class RobotContainer {
     Command driveSetpointGenKeyboard = drivebase.driveWithSetpointGeneratorFieldRelative(
         driveDirectAngleKeyboard);
 
-    Command rotateHandCommand = new ArmCommand(armSubsystem, 10, 1);
-    Command putL2reefComman = new ArmCommand(armSubsystem, 40, 1);
-    Command roteteHandCommandBack = new ArmCommand(armSubsystem, 70, 1);
     Command setElevtorDefaultPos = new ElevatorSetPositionCommand(elevatorSubsystem, 50);
 
     if (RobotBase.isSimulation()) {
@@ -200,14 +195,9 @@ public class RobotContainer {
       driverXbox.leftBumper().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());
 
     // operator controller
-      handXbox.leftBumper().whileTrue(grabPeice);
-      handXbox.rightBumper().whileTrue(removePeice);
       // we physically removed the hand from the robot
       // handXbox.y().onTrue(RotateHand);
-      // handXbox.a().onTrue(RotateHandSecond);
-      handXbox.povDown().onTrue(rotateHandCommand);
-      handXbox.povUp().onTrue(roteteHandCommandBack);
-      handXbox.povLeft().onTrue(putL2reefComman);
+      // handXbox.a().onTrue(RotateHandSecond);;
       elevatorSubsystem.setDefaultCommand(
           new ElevatorCommand(elevatorSubsystem,
                               () -> handXbox.getRightTriggerAxis() - handXbox.getLeftTriggerAxis()));
@@ -221,9 +211,11 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    Command rotateHandCommand = new ArmCommand(armSubsystem, 10, 1);
-    return rotateHandCommand;
-
+    return new RunCommand(() -> {
+      drivebase.zeroGyro();
+      drivebase.drive(new ChassisSpeeds(0, 0,1));
+      }
+    , drivebase).withTimeout(15);
   }
 
   public void setMotorBrake(boolean brake) {
